@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { createPayment } from "@/services/payments.service";
 
@@ -11,27 +11,7 @@ export default function CartPage() {
     const [checkoutPopup, setCheckoutPopup] = useState(null);
     const [checkoutError, setCheckoutError] = useState(null);
 
-    const handlePaymentResult = useCallback((event) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/e54fe57d-a304-425d-8c86-a046314510ee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart/page.js:handlePaymentResult',message:'Cart received postMessage',data:{type:event.data?.type,origin:event.origin,expectedOrigin:window.location.origin},timestamp:Date.now(),hypothesisId:'H1-H5'})}).catch(()=>{});
-        // #endregion
-        if (event.origin !== window.location.origin || event.data?.type !== "PAYMENT_RESULT") return;
-        window.removeEventListener("message", handlePaymentResult);
-        if (checkoutPopup && !checkoutPopup.closed) checkoutPopup.close();
-        setCheckoutPopup(null);
-        const path = event.data.returnPath || (event.data.status === "success" ? "/success" : event.data.status === "pending" ? "/pending" : "/failure");
-        window.location.href = path;
-    }, [checkoutPopup]);
-
-    useEffect(() => {
-        if (!checkoutPopup) return;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/e54fe57d-a304-425d-8c86-a046314510ee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart/page.js:useEffect',message:'Cart added message listener',data:{listeningFor:'PAYMENT_RESULT'},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-        // #endregion
-        window.addEventListener("message", handlePaymentResult);
-        return () => window.removeEventListener("message", handlePaymentResult);
-    }, [checkoutPopup, handlePaymentResult]);
-
+    // Monitorear cuando el popup se cierra o redirige (window.opener hace esto)
     useEffect(() => {
         const interval = setInterval(() => {
             if (checkoutPopup?.closed) {
